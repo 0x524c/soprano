@@ -310,7 +310,7 @@ def dedup_punctuation(text):
     text = re.sub(r"[\.,]*\.[\.,]*", ".", text)
     text = re.sub(r"[\.,!]*![\.,!]*", "!", text)
     text = re.sub(r"[\.,!\?]*\?[\.,!\?]*", "?", text)
-    text = re.sub("[ELLIPSIS]", "...", text)
+    text = re.sub(r"\[ELLIPSIS\]", "...", text)
     return text
 
 def clean_text(text):
