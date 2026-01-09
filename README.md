@@ -108,7 +108,7 @@ out = torch.cat(chunks)
 ### Serve endpoint
 
 ```
-uvicorn server:app --host 0.0.0.0 --port 8000
+uvicorn soprano.server:app --host 0.0.0.0 --port 8000
 ```
 
 Compatible with OpenAI speech API. Use the endpoint like this:
