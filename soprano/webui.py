@@ -176,8 +176,7 @@ def find_free_port(start_port=7860, max_tries=100):
             continue
     raise OSError("Could not find a free port")
 
-
-if __name__ == "__main__":
+def main():
     port = find_free_port(7860)
     print(f"Starting Gradio interface on port {port}")
     demo.launch(
@@ -194,3 +193,6 @@ a:hover {
 }
 """
     )
+
+if __name__ == "__main__":
+    main()
