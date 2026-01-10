@@ -34,8 +34,6 @@ class SopranoTTS:
         RECOGNIZED_DEVICES = ['cuda', 'cpu', 'mps']
         RECOGNIZED_BACKENDS = ['auto', 'lmdeploy', 'transformers']
         assert device in RECOGNIZED_DEVICES, f"unrecognized device {device}, device must be in {RECOGNIZED_DEVICES}"
-        
-        # Auto-select backend based on device and availability
         if backend == 'auto':
             if device == 'cpu':
                 backend = 'transformers'
@@ -48,7 +46,6 @@ class SopranoTTS:
         assert backend in RECOGNIZED_BACKENDS, f"unrecognized backend {backend}, backend must be in {RECOGNIZED_BACKENDS}"
         print(f"Using backend {backend}.")
 
-        self.device = device
         if backend == 'lmdeploy':
             from .backends.lmdeploy import LMDeployModel
             self.pipeline = LMDeployModel(device=device, cache_size_mb=cache_size_mb)
@@ -56,6 +53,7 @@ class SopranoTTS:
             from .backends.transformers import TransformersModel
             self.pipeline = TransformersModel(device=device)
 
+        self.device = device
         self.decoder = SopranoDecoder().to(device)
         decoder_path = hf_hub_download(repo_id='ekwek/Soprano-80M', filename='decoder.pth')
         self.decoder.load_state_dict(torch.load(decoder_path, map_location=device))
