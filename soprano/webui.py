@@ -3,22 +3,34 @@
 Gradio Web Interface for Soprano TTS
 """
 
-import gradio as gr
-import torch
-from soprano import SopranoTTS
-import numpy as np
+import argparse
 import socket
 import time
+import gradio as gr
+import numpy as np
+from soprano import SopranoTTS
 
-# Detect device
+
+parser = argparse.ArgumentParser(description='Soprano Text-to-Speech Gradio WebUI')
+parser.add_argument('--device', '-d', default='auto',
+                    choices=['auto', 'cuda', 'cpu', 'mps'],
+                    help='Device to use for inference')
+parser.add_argument('--backend', '-b', default='auto',
+                    choices=['auto', 'transformers', 'lmdeploy'],
+                    help='Backend to use for inference')
+parser.add_argument('--cache-size', '-c', type=int, default=100,
+                    help='Cache size in MB (for lmdeploy backend)')
+parser.add_argument('--decoder-batch-size', '-bs', type=int, default=1,
+                    help='Batch size when decoding audio')
+args = parser.parse_args()
 
 # Initialize model
 print("Loading Soprano TTS model...")
 model = SopranoTTS(
-    backend="auto",
-    device='auto',
-    cache_size_mb=100,
-    decoder_batch_size=1,
+    backend=args.backend,
+    device=args.device,
+    cache_size_mb=args.cache_size,
+    decoder_batch_size=args.decoder_batch_size,
 )
 device = model.device
 backend = model.backend
@@ -68,7 +80,6 @@ def generate_speech(
 
 # Create Gradio interface
 with gr.Blocks(title="Soprano TTS") as demo:
-
     gr.Markdown(
         f"""
 # 🎵 Soprano TTS
@@ -84,7 +95,6 @@ and up to **2000x real-time generation**, all while being easy to deploy at **<1
 **Model Weights:** https://huggingface.co/ekwek/Soprano-80M
 """
     )
-
     with gr.Row():
         with gr.Column(scale=2):
             text_input = gr.Textbox(
@@ -94,7 +104,6 @@ and up to **2000x real-time generation**, all while being easy to deploy at **<1
                 lines=5,
                 max_lines=10,
             )
-
             with gr.Accordion("Advanced Settings", open=False):
                 temperature = gr.Slider(
                     minimum=0.1,
@@ -103,7 +112,6 @@ and up to **2000x real-time generation**, all while being easy to deploy at **<1
                     step=0.05,
                     label="Temperature",
                 )
-
                 top_p = gr.Slider(
                     minimum=0.5,
                     maximum=1.0,
@@ -111,7 +119,6 @@ and up to **2000x real-time generation**, all while being easy to deploy at **<1
                     step=0.05,
                     label="Top P",
                 )
-
                 repetition_penalty = gr.Slider(
                     minimum=1.0,
                     maximum=2.0,
@@ -119,23 +126,19 @@ and up to **2000x real-time generation**, all while being easy to deploy at **<1
                     step=0.1,
                     label="Repetition Penalty",
                 )
-
             generate_btn = gr.Button("Generate Speech", variant="primary", size="lg")
-
         with gr.Column(scale=1):
             audio_output = gr.Audio(
                 label="Generated Speech",
                 type="numpy",
                 autoplay=True,
             )
-
             status_output = gr.Textbox(
                 label="Status",
                 interactive=False,
                 lines=3,
                 max_lines=10
             )
-
     gr.Examples(
         examples=[
             ["Soprano is an extremely lightweight text to speech model.", 0.3, 0.95, 1.2],
@@ -146,7 +149,6 @@ and up to **2000x real-time generation**, all while being easy to deploy at **<1
         inputs=[text_input, temperature, top_p, repetition_penalty],
         label="Example Prompts",
     )
-
     generate_btn.click(
         fn=generate_speech,
         inputs=[text_input, temperature, top_p, repetition_penalty],
@@ -158,10 +160,10 @@ and up to **2000x real-time generation**, all while being easy to deploy at **<1
 
 - Soprano works best when each sentence is between 2 and 15 seconds long.
 - Although Soprano recognizes numbers and some special characters, it occasionally mispronounces them.
-  Best results can be achieved by converting these into their phonetic form.
-  (1+1 -> one plus one, etc)
+Best results can be achieved by converting these into their phonetic form.
+(1+1 -> one plus one, etc)
 - If Soprano produces unsatisfactory results, you can easily regenerate it for a new, potentially better generation.
-  You may also change the sampling settings for more varied results.
+You may also change the sampling settings for more varied results.
 - Avoid improper grammar such as not using contractions, multiple spaces, etc.
 """
     )
@@ -178,6 +180,7 @@ def find_free_port(start_port=7860, max_tries=100):
     raise OSError("Could not find a free port")
 
 def main():
+    # Start Gradio interface
     port = find_free_port(7860)
     print(f"Starting Gradio interface on port {port}")
     demo.launch(
